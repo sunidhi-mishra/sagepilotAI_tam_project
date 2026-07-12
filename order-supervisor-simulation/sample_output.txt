@@ -1,0 +1,42 @@
+
+======================================================================
+FINAL SUMMARY -- Order ORDER-DEMO-001
+======================================================================
+Status: closed:delivered
+
+Actions taken (18 tool calls):
+  - create_internal_note: {'order_id': 'ORDER-DEMO-001', 'note': 'Payment failed: card declined'}
+  - message_customer: {'order_id': 'ORDER-DEMO-001', 'text': "We noticed an issue with your payment -- retrying now, we'll confirm shortly."}
+  - create_internal_note: {'order_id': 'ORDER-DEMO-001', 'note': 'Scheduled check-in: nothing new, order on track'}
+  - create_internal_note: {'order_id': 'ORDER-DEMO-001', 'note': 'Scheduled check-in: nothing new, order on track'}
+  - create_internal_note: {'order_id': 'ORDER-DEMO-001', 'note': 'Scheduled check-in: nothing new, order on track'}
+  - message_customer: {'order_id': 'ORDER-DEMO-001', 'text': "Heads up -- your order is delayed (courier backlog). We're on it and will update you."}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Delay reported (courier backlog) -- please confirm new ETA.'}
+  - message_customer: {'order_id': 'ORDER-DEMO-001', 'text': 'Still tracking your delayed shipment -- latest update coming shortly.'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - mark_for_review: {'order_id': 'ORDER-DEMO-001', 'reason': "Escalation language detected: 'This is ridiculous, I want a refund or I'm filing a chargeback.'"}
+  - message_customer: {'order_id': 'ORDER-DEMO-001', 'text': "I'm sorry for the frustration -- looping in a specialist to sort this out right away."}
+  - escalate: {'order_id': 'ORDER-DEMO-001', 'reason': 'Refund of 2600 exceeds auto-approve limit of 2000.0'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - message_logistics_team: {'order_id': 'ORDER-DEMO-001', 'text': 'Checking in -- still no resolution on: shipment_delayed'}
+  - message_customer: {'order_id': 'ORDER-DEMO-001', 'text': 'Your order has been delivered -- hope you love it!'}
+
+Rolling memory summary (collapsed older detail):
+  [t=0.0h] payment_failed -> WAKE_NOW [t=0.0h] Logged payment failure and reassured customer [t=0.5h] payment_confirmed -> STAY_ASLEEP [t=1.0h] shipment_created -> STAY_ASLEEP [t=7.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=7.0h] Scheduled check-in: no action needed [t=13.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=13.0h] Scheduled check-in: no action needed [t=19.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=19.0h] Scheduled check-in: no action needed [t=20.0h] shipment_delayed -> WAKE_NOW [t=20.0h] Notified customer of delay and pinged logistics for new ETA [t=22.0h] customer_message_received -> WAKE_NOW [t=22.0h] Replied to customer re: known open delay [t=28.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=28.0h] Scheduled check-in: chased unresolved issue (shipment_delayed) [t=34.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=34.0h] Scheduled check-in: chased unresolved issue (shipment_delayed) [t=40.0h] customer_message_received -> WAKE_NOW [t=40.0h] Flagged escalation-language message for human review [t=41.0h] refund_requested -> WAKE_NOW [t=41.0h] Escalated refund request of 2600 (over auto-approve limit) [t=47.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=47.0h] Scheduled check-in: chased unresolved issue (shipment_delayed) [t=53.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW [t=53.0h] Scheduled check-in: chased unresolved issue (shipment_delayed) [t=59.0h] no_update_for_n_hours (scheduled) -> WAKE_NOW
+
+Recent timeline (last 5 entries kept verbatim):
+  [t=59.0h] (action) Scheduled check-in: chased unresolved issue (shipment_delayed)
+  [t=65.0h] (event) no_update_for_n_hours (scheduled) -> WAKE_NOW
+  [t=65.0h] (action) Scheduled check-in: chased unresolved issue (shipment_delayed)
+  [t=70.0h] (event) delivered -> WAKE_NOW
+  [t=70.0h] (action) Sent delivery confirmation to customer
+
+Learnings:
+  - No unresolved issues flagged at close.
+  - 18 tool calls made across the run.
+  - 1 escalation(s) to a human.
+======================================================================
+

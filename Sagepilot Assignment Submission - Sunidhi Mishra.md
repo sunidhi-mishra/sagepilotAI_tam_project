@@ -168,7 +168,8 @@ Say the customer replies "ok thanks" right after being told their refund is bein
 
 **Question:** B2. Build a small version Build one program, roughly 200 to 350 lines. No Temporal, no database, no frontend, no cloud. An in-memory simulation is correct.
 
-**Answer:** This part is a code deliverable rather than a written answer, submitted separately as its own folder: `order_supervisor.py`, a `README.md`, `sample_events.json`, and the real output from running it (`sample_output.txt`). The README covers how to run it, maps each part of the build back to its Temporal equivalent (signal, timer, query, activity, continue-as-new), and explains where an LLM call would improve on the current rule-based decision step and exactly what it would be given to work with.
+**Answer:**
+This part is a code deliverable rather than a written answer, submitted separately as two folders, `order-supervisor-simulation (rule-based)` and `order-supervisor-simulation (llm-based)`. The rule-based folder is the core graded submission, no external calls, no dependencies beyond Python. Each folder contains the simulation code, a `README.md`, a `sample_events.json`, and the real output from running it. The rule-based README covers how to run it and maps each part of the build back to its Temporal equivalent (signal, timer, query, activity, continue-as-new). The LLM-based folder covers the bonus item, wiring in a real language model for the decision step, with the same event handling and memory logic underneath, plus a fallback to the rule-based logic if the API call ever fails.
 
 ---
 

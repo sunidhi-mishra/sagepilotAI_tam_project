@@ -43,6 +43,12 @@ Same simulation, same event handling, same wake policy and memory collapse logic
 
 To run it, see that folder's own `README.md` for exact setup steps (an API key is required).
 
+### Demo
+
+A screen recording showing both the rule-based and LLM-based versions running end-to-end:
+
+**[▶ Watch Loom Demo](https://www.loom.com/share/fd1894dcd4da4e769ed0cd4220d18672)**
+
 ### Why two folders instead of one
 
 The assignment's base requirement is explicitly rule-based, in-memory, and dependency-free. Wiring in a real LLM is called out separately as a bonus. Keeping them in separate folders means the graded submission stands on its own, exactly as specified, while the bonus work is clearly additional rather than folded into (and potentially confused with) the required deliverable.

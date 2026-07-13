@@ -1,0 +1,10 @@
+[
+  {"timestamp": 0, "type": "payment_failed", "data": {"reason": "card declined"}},
+  {"timestamp": 0.5, "type": "payment_confirmed", "data": {}},
+  {"timestamp": 1, "type": "shipment_created", "data": {"tracking_id": "TRK-4821"}},
+  {"timestamp": 20, "type": "shipment_delayed", "data": {"reason": "courier backlog"}},
+  {"timestamp": 22, "type": "customer_message_received", "data": {"text": "Hey, where is my order? It's been a while."}},
+  {"timestamp": 40, "type": "customer_message_received", "data": {"text": "This is ridiculous, I want a refund or I'm filing a chargeback."}},
+  {"timestamp": 41, "type": "refund_requested", "data": {"amount": 2600}},
+  {"timestamp": 70, "type": "delivered", "data": {}}
+]

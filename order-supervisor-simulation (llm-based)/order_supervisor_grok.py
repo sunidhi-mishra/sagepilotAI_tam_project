@@ -393,7 +393,20 @@ class OrderSupervisor:
         return summary
 
 
+def load_dotenv():
+    for path in [".env", "../.env"]:
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        os.environ[k.strip()] = v.strip().strip("'\"")
+            break
+
+
 def main():
+    load_dotenv()
     parser = argparse.ArgumentParser(description="Order Supervisor Simulation")
     parser.add_argument("events_file", help="JSON file with order events")
     parser.add_argument("--llm", action="store_true", help="Use Grok LLM agent (requires GROK_API_KEY)")

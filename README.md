@@ -51,6 +51,8 @@ The assignment's base requirement is explicitly rule-based, in-memory, and depen
 
 ```
 .
+├── .env                                               (local API keys config, gitignored)
+├── .gitignore                                         (specifies intentionally untracked files)
 ├── README.md                                          (this file)
 ├── Sagepilot Assignment Submission - Sunidhi Mishra    (exported copy of the written answers)
 ├── order-supervisor-simulation (rule-based)/
@@ -59,8 +61,8 @@ The assignment's base requirement is explicitly rule-based, in-memory, and depen
 │   ├── sample_events.json
 │   └── sample_output.txt
 └── order-supervisor-simulation (llm-based)/
-    ├── order_supervisor_llm.py
+    ├── order_supervisor_grok.py
     ├── README.md
     ├── sample_events.json
-    └── sample_output.txt (or equivalent LLM-run output)
+    └── sample_output.txt
 ```

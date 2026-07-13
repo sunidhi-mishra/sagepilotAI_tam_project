@@ -169,11 +169,7 @@ Two places inside `decide_and_act()` are the clearest candidates:
    decides unilaterally. This mirrors Sagepilot's own tiered
    auto/read-only/needs-approval model from Part A.
 
-I have not wired in a real LLM call (the BONUS) given the time
-available for this assignment -- the rule-based policy above is
-explicitly called out as acceptable in the brief, and I'd rather submit
-a correct, fully-tested rule-based version than a rushed, half-tested
-LLM integration.
+
 
 ## Files
 

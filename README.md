@@ -14,7 +14,7 @@ The document is organized by part, with each question followed directly by its a
 
 Part B2 asked for a small, in-memory simulation of the order supervisor system described in Part B, with no Temporal, database, cloud, or frontend involved. That's the graded requirement, and it's fully met by the rule-based version below. A second, LLM-based version is included as well, covering the BONUS item in the brief ("wire in a real LLM for the decision step").
 
-### `order-supervisor-simulation (rule-based)`
+### [`order-supervisor-simulation (rule-based)`](./order-supervisor-simulation%20\(rule-based\)/)
 
 This is the core graded submission. A fixed set of rules decides what to do at each wake-up, no external API calls, no dependencies beyond Python itself.
 
@@ -31,7 +31,7 @@ cd "order-supervisor-simulation (rule-based)"
 python3 order_supervisor.py sample_events.json
 ```
 
-### `order-supervisor-simulation (llm-based)`
+### [`order-supervisor-simulation (llm-based)`](./order-supervisor-simulation%20\(llm-based\)/)
 
 Same simulation, same event handling, same wake policy and memory collapse logic, but the decision step at each wake-up is made by a real LLM instead of fixed rules, with an automatic fallback to the rule-based logic if the API call fails or returns something invalid.
 

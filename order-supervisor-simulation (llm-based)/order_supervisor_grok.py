@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Order Supervisor Simulation with optional LLM integration.
+Order Supervisor Simulation with optional Grok LLM integration.
 
 Run with rule-based policy (default):
-  python3 order_supervisor.py sample_events.json
+  python3 order_supervisor_grok.py sample_events.json
 
-Run with Gemini LLM agent:
-  GEMINI_API_KEY=<your-key> python3 order_supervisor.py --llm sample_events.json
+Run with Grok LLM agent:
+  GROK_API_KEY=<your-key> python3 order_supervisor_grok.py --llm sample_events.json
 
-The LLM mode uses Gemini to decide which tool to call on each wake-up,
+The LLM mode uses Grok to decide which tool to call on each wake-up,
 grounded in the order's state. If the API fails or returns invalid output,
 it falls back to the rule-based agent.
 """
@@ -22,9 +22,9 @@ from typing import Optional, Set
 from datetime import datetime
 
 try:
-    import google.generativeai as genai
+    import requests
 except ImportError:
-    genai = None
+    requests = None
 
 
 @dataclass
@@ -170,61 +170,66 @@ class Agent:
             state.add_timeline_entry(event["timestamp"], f"Logged unhandled event: {event_type}")
 
 
-class LLMAgent:
-    """Gemini-based decision agent with structured JSON output and fallback."""
+class GrokAgent:
+    """Grok-based decision agent with fallback."""
 
     def __init__(self, api_key: str):
-        """Initialize Gemini client."""
-        if not genai:
-            raise ImportError("google-generativeai not installed. Run: pip install google-generativeai")
-        genai.configure(api_key=api_key)
-        self.client = genai.GenerativeModel("gemini-1.5-flash")
+        """Initialize Grok client."""
+        if not requests:
+            raise ImportError("requests not installed. Run: pip install requests")
+        self.api_key = api_key
+        self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         self.fallback_agent = Agent()
         self.call_count = 0
         self.fallback_count = 0
 
     def decide_and_act(self, event: dict, state: OrderState, tools: ToolBox) -> None:
-        """Use Gemini to decide which tool to call, with fallback to rule-based agent."""
+        """Use Groq to decide which tool to call, with fallback to rule-based agent."""
         self.call_count += 1
         try:
-            decision = self._query_gemini(event, state)
+            decision = self._query_grok(event, state)
             if decision:
                 self._execute_decision(decision, event, state, tools)
             else:
                 self._fallback(event, state, tools)
         except Exception as e:
-            print(f"[LLM Error] {str(e)}, falling back to rule-based agent", file=sys.stderr)
+            print(f"[Groq Error] {str(e)}, falling back to rule-based agent", file=sys.stderr)
             self.fallback_count += 1
             self.fallback_agent.decide_and_act(event, state, tools)
 
-    def _query_gemini(self, event: dict, state: OrderState) -> Optional[dict]:
-        """Call Gemini with structured JSON schema and return parsed decision."""
+    def _query_grok(self, event: dict, state: OrderState) -> Optional[dict]:
+        """Call Groq API and return parsed decision."""
         prompt = self._build_prompt(event, state)
-        response = self.client.generate_content(
-            prompt,
-            generation_config={
-                "response_mime_type": "application/json",
-                "response_schema": {
-                    "type": "object",
-                    "properties": {
-                        "tool": {"type": "string", "enum": list(TOOLS.keys()) + ["escalate_to_human"]},
-                        "reasoning": {"type": "string"},
-                        "text_or_reason": {"type": "string"},
-                    },
-                    "required": ["tool", "reasoning", "text_or_reason"],
-                },
-            },
-        )
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.7,
+            "max_tokens": 500,
+        }
+
         try:
-            result = json.loads(response.text)
-            return result
-        except (json.JSONDecodeError, KeyError, AttributeError):
-            print(f"[LLM Parse Error] Invalid JSON response: {response.text}", file=sys.stderr)
+            response = requests.post(self.base_url, json=payload, headers=headers, timeout=10)
+            response.raise_for_status()
+            result = response.json()
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            decision = self._parse_response(content)
+            return decision
+        except requests.exceptions.RequestException as e:
+            print(f"[Grok API Error] {str(e)}", file=sys.stderr)
+            return None
+        except (json.JSONDecodeError, KeyError, AttributeError) as e:
+            print(f"[Grok Parse Error] {str(e)}", file=sys.stderr)
             return None
 
     def _build_prompt(self, event: dict, state: OrderState) -> str:
         """Build the prompt with full context."""
         timeline_str = "\n".join([f"  [t={e['time']}h] {e['entry']}" for e in state.timeline[-3:]])
+        tools_list = "\n".join([f"  - {tool}: {desc}" for tool, desc in TOOLS.items()])
+
         return f"""You are an order supervisor agent. Your job is to decide which tool to call based on the current event and order state.
 
 Order State:
@@ -245,21 +250,40 @@ Current Event:
 - Timestamp: t={event['timestamp']}h
 
 Available Tools:
-{chr(10).join([f"  - {tool}: {desc}" for tool, desc in TOOLS.items()])}
+{tools_list}
   - escalate_to_human: if the situation requires human judgment and none of the above tools fit
 
 Decision Rules:
 1. Ground every decision in the event and state. Do not invent facts.
-2. If no tool clearly applies, use "escalate_to_human".
+2. If no tool clearly applies, respond with "escalate_to_human".
 3. Never call a tool without a concrete reason tied to the event data or state.
 4. For refunds over 2000, always escalate.
 5. For angry customer language, escalate.
 
-Respond with JSON: {{"tool": "<tool_name>", "reasoning": "<why this tool>", "text_or_reason": "<what to send/log>"}}
+Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
+{{"tool": "<tool_name>", "reasoning": "<why this tool>", "text_or_reason": "<what to send/log>"}}
+
+For example:
+{{"tool": "message_customer", "reasoning": "Customer reported delay, needs reassurance", "text_or_reason": "We're tracking your delayed shipment..."}}
+
+Now decide:
 """
 
+    def _parse_response(self, content: str) -> Optional[dict]:
+        """Parse Grok's response as JSON."""
+        content = content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+        result = json.loads(content)
+        return result
+
     def _execute_decision(self, decision: dict, event: dict, state: OrderState, tools: ToolBox) -> None:
-        """Execute the LLM's decision."""
+        """Execute the Grok decision."""
         tool_name = decision.get("tool", "escalate_to_human")
         text_or_reason = decision.get("text_or_reason", "No details provided")
         reasoning = decision.get("reasoning", "")
@@ -271,8 +295,8 @@ Respond with JSON: {{"tool": "<tool_name>", "reasoning": "<why this tool>", "tex
             tools.call_tool(tool_name, text=text_or_reason)
             state.add_timeline_entry(event["timestamp"], f"Called {tool_name}: {reasoning}")
         else:
-            tools.create_internal_note(f"Invalid tool from LLM: {tool_name}")
-            state.add_timeline_entry(event["timestamp"], f"Invalid LLM tool: {tool_name}, logged")
+            tools.create_internal_note(f"Invalid tool from Grok: {tool_name}")
+            state.add_timeline_entry(event["timestamp"], f"Invalid Grok tool: {tool_name}, logged")
 
         if event["type"] == "shipment_delayed":
             state.open_issue = "shipment_delayed"
@@ -295,14 +319,15 @@ def wake_policy(event: dict) -> str:
 class OrderSupervisor:
     """Main supervisor orchestrator."""
 
-    def __init__(self, use_llm: bool = False, api_key: Optional[str] = None):
+    def __init__(self, use_llm: bool = False, api_key: Optional[str] = None, llm_provider: str = "grok"):
         self.use_llm = use_llm
+        self.llm_provider = llm_provider
         if use_llm:
             if not api_key:
-                api_key = os.environ.get("GEMINI_API_KEY")
+                api_key = os.environ.get("GROK_API_KEY")
             if not api_key:
-                raise ValueError("GEMINI_API_KEY environment variable not set")
-            self.agent = LLMAgent(api_key)
+                raise ValueError("GROK_API_KEY environment variable not set")
+            self.agent = GrokAgent(api_key)
         else:
             self.agent = Agent()
 
@@ -362,7 +387,7 @@ class OrderSupervisor:
             "timeline": state.timeline,
             "memory_summary": state.memory_summary,
         }
-        if self.use_llm and isinstance(self.agent, LLMAgent):
+        if self.use_llm and isinstance(self.agent, GrokAgent):
             summary["llm_calls"] = self.agent.call_count
             summary["llm_fallbacks"] = self.agent.fallback_count
         return summary
@@ -371,13 +396,13 @@ class OrderSupervisor:
 def main():
     parser = argparse.ArgumentParser(description="Order Supervisor Simulation")
     parser.add_argument("events_file", help="JSON file with order events")
-    parser.add_argument("--llm", action="store_true", help="Use Gemini LLM agent (requires GEMINI_API_KEY)")
+    parser.add_argument("--llm", action="store_true", help="Use Grok LLM agent (requires GROK_API_KEY)")
     args = parser.parse_args()
 
     with open(args.events_file) as f:
         events = json.load(f)
 
-    supervisor = OrderSupervisor(use_llm=args.llm, api_key=os.environ.get("GEMINI_API_KEY"))
+    supervisor = OrderSupervisor(use_llm=args.llm, api_key=os.environ.get("GROK_API_KEY"))
     result = supervisor.run(events)
 
     print(json.dumps(result, indent=2))

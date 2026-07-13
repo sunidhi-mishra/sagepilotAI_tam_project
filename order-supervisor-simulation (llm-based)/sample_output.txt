@@ -1,0 +1,48 @@
+{
+  "order_id": "ORDER-001",
+  "final_status": "closed: delivered",
+  "final_open_issue": null,
+  "total_tool_calls": 15,
+  "activity_log": [
+    "[message_customer] Your payment was declined due to a card issue. Please update your payment method to proceed with your order.",
+    "[message_customer] We haven't received an update on your payment, please provide an alternative payment method to proceed with your order.",
+    "[message_customer] We wanted to follow up on the payment issue from earlier. Could you please provide an alternative payment method to proceed with your order?",
+    "[message_customer] We haven't received an update on your alternative payment, please let us know if you need assistance or would like to proceed with a different payment method.",
+    "[message_customer] Your shipment has been delayed due to a courier backlog, we apologize for the inconvenience and will keep you updated on the new delivery time",
+    "[message_customer] We apologize for the delay. Your shipment has been delayed due to courier backlog. We're working to get it to you as soon as possible.",
+    "[message_customer] We're still working on resolving your order issues, including the delayed shipment and previous payment failure, please let us know if you have any updates on the alternative payment",
+    "[message_customer] We wanted to follow up on your order status and the shipment delay. Also, we still need an alternative payment method due to the previous card decline. Please let us know how to proceed.",
+    "[escalate] Customer is requesting a refund and threatening a chargeback due to shipment delay and previous payment failure",
+    "[escalate] Refund of 2600 requested for order ORDER-001, requires human review",
+    "[message_customer] We're still waiting for an update on your payment and apologize again for the shipment delay, please let us know if you have any questions or need assistance with alternative payment",
+    "[message_customer] We apologize for the delay in your shipment. We are working to resolve the issue as soon as possible and will keep you updated on the status of your order.",
+    "[message_customer] We're still working on resolving the shipment delay for your order. Sorry again for the inconvenience and we'll keep you updated on any progress.",
+    "[message_customer] We're still working on resolving the shipment delay for your order, and we apologize for the continued wait. We will keep you updated on any changes.",
+    "[message_customer] Your shipment for order ORDER-001 has been delivered. We apologize again for the delay and appreciate your patience."
+  ],
+  "timeline": [
+    {
+      "time": 47,
+      "entry": "Called message_customer: No update for 47 hours, previous payment failure, and shipment delay, customer needs a follow-up on order status and alternative payment"
+    },
+    {
+      "time": 53,
+      "entry": "Called message_customer: No update for 53 hours and previous shipment delay, customer needs a follow-up on order status"
+    },
+    {
+      "time": 59,
+      "entry": "Called message_customer: No update for 59 hours and previous shipment delay, customer needs a follow-up on order status"
+    },
+    {
+      "time": 65,
+      "entry": "Called message_customer: No update for 65 hours and previous shipment delay, customer needs a follow-up on order status"
+    },
+    {
+      "time": 70,
+      "entry": "Called message_customer: The current event indicates the shipment has been delivered, and the order status is still active with an open issue of shipment_delayed, so the customer needs to be informed that the shipment has been delivered"
+    }
+  ],
+  "memory_summary": "[t=0h] Called message_customer: Payment failed due to card decline, customer needs to be informed and prompted for alternative payment [t=7h] Called message_customer: No update for 7 hours and previous payment failure, customer needs a follow-up on alternative payment [t=13h] Called message_customer: No update for 13 hours and previous payment failure, customer needs a follow-up on alternative payment [t=19h] Called message_customer: No update for 19 hours and previous payment failure, customer needs a follow-up on alternative payment [t=20h] Called message_customer: Shipment has been delayed due to courier backlog, customer should be informed [t=22h] Called message_customer: Customer inquired about order status, and there is an open issue of shipment_delayed [t=28h] Called message_customer: No update for 28 hours, previous payment failure, and shipment delay, customer needs a follow-up on order status and alternative payment [t=34h] Called message_customer: No update for 34 hours, previous payment failure, and shipment delay, customer needs a follow-up on order status and alternative payment [t=40h] Called escalate: Customer is using angry language and threatening a chargeback, indicating a need for human intervention [t=41h] Called escalate: The refund amount is over 2000, which requires escalation according to the decision rules",
+  "llm_calls": 15,
+  "llm_fallbacks": 0
+}

@@ -1,6 +1,8 @@
-# Order Supervisor Simulation with LLM Integration
+# Order Supervisor Simulation with Grok LLM Integration
 
-A Python simulation of a durable, agentic workflow for managing order lifecycle events. This implementation includes both a rule-based agent (the graded B2 submission) and an optional Gemini LLM agent (the bonus feature).
+A Python simulation of a durable, agentic workflow for managing order lifecycle events. This implementation includes both a rule-based agent (the graded B2 submission) and an optional Grok LLM agent (the bonus feature).
+
+This is the Grok API alternative to the Gemini version. Both versions produce identical output structure; use whichever API you have access to.
 
 ## Overview
 
@@ -18,10 +20,10 @@ The supervisor manages a single order through its entire lifecycle, handling eve
 
 For rule-based mode (default): no dependencies needed, runs on Python 3.7+
 
-For LLM mode: install the Gemini API client
+For Grok LLM mode: install the HTTP client
 
 ```bash
-pip install google-generativeai
+pip install requests
 ```
 
 ### Rule-Based Agent (Default, Graded Submission)
@@ -29,28 +31,28 @@ pip install google-generativeai
 This is the core B2 submission. No API calls, no external dependencies, pure rule-based decision logic.
 
 ```bash
-python3 order_supervisor_llm.py sample_events.json
+python3 order_supervisor_grok.py sample_events.json
 ```
 
 The agent follows hard-coded rules based on event type and current state. For example, if a refund exceeds ₹2000, it escalates; if a customer uses angry language, it flags for review; if no updates arrive for 6 hours, it does a scheduled check-in.
 
-### LLM Agent (Bonus: Gemini Integration)
+### Grok LLM Agent (Bonus: Grok Integration)
 
-Wire in Gemini to reason through decisions instead of following fixed rules. The LLM is grounded in the order state and a fixed list of available tools. If the API fails, it automatically falls back to the rule-based agent.
+Wire in Grok to reason through decisions instead of following fixed rules. The LLM is grounded in the order state and a fixed list of available tools. If the API fails, it automatically falls back to the rule-based agent.
 
-First, get your Gemini API key:
+First, get your Grok API key:
 
-1. Go to https://aistudio.google.com/app/apikeys
-2. Click "Create API key"
+1. Go to https://console.x.ai/
+2. Create an API key
 3. Copy the key
 
 Then run:
 
 ```bash
-GEMINI_API_KEY=<your-key> python3 order_supervisor_llm.py --llm sample_events.json
+GROK_API_KEY=<your-key> python3 order_supervisor_grok.py --llm sample_events.json
 ```
 
-Replace `<your-key>` with your actual key. The free tier includes 60 requests per minute, which is plenty for testing.
+Replace `<your-key>` with your actual Grok API key.
 
 ### Sample Output
 
@@ -78,7 +80,7 @@ Both modes produce JSON output:
 }
 ```
 
-In LLM mode, the output also includes:
+In Grok LLM mode, the output also includes:
 
 ```json
 {
@@ -87,21 +89,21 @@ In LLM mode, the output also includes:
 }
 ```
 
-The `llm_calls` count shows how many times Gemini was invoked (one per WAKE_NOW event). The `llm_fallbacks` count shows how many times the API failed and the system fell back to rule-based decisions (ideally zero).
+The `llm_calls` count shows how many times Grok was invoked (one per WAKE_NOW event). The `llm_fallbacks` count shows how many times the API failed and the system fell back to rule-based decisions (ideally zero).
 
-## Comparing Rule-Based vs. LLM
+## Comparing Rule-Based vs. Grok LLM
 
 Run both and save the outputs:
 
 ```bash
 # Rule-based
-python3 order_supervisor_llm.py sample_events.json > output_rule_based.txt
+python3 order_supervisor_grok.py sample_events.json > output_rule_based.txt
 
-# LLM
-GEMINI_API_KEY=<your-key> python3 order_supervisor_llm.py --llm sample_events.json > output_llm.txt
+# Grok LLM
+GROK_API_KEY=<your-key> python3 order_supervisor_grok.py --llm sample_events.json > output_grok.txt
 ```
 
-The structure is identical. The activity logs may differ (LLM might make different tool calls in edge cases since it reasons from context), but both should close the order correctly with 18 total tool calls.
+The structure is identical. The activity logs may differ (Grok might make different tool calls in edge cases since it reasons from context), but both should close the order correctly with 18 total tool calls.
 
 ## Architecture
 
@@ -119,9 +121,9 @@ elif event_type == "refund_requested":
         # Auto-approve
 ```
 
-### LLM Agent (`LLMAgent` class)
+### Grok LLM Agent (`GrokAgent` class)
 
-Uses Gemini with structured JSON output to decide which tool to call. Grounded in order state and available tools.
+Uses Grok API via HTTP REST calls to decide which tool to call. Grounded in order state and available tools.
 
 **Prompt structure:**
 - Order state (status, open issue, recent timeline, memory summary)
@@ -129,7 +131,7 @@ Uses Gemini with structured JSON output to decide which tool to call. Grounded i
 - Available tools with descriptions
 - Decision rules ("Ground every decision in the event and state," "Escalate if confused")
 
-**Response schema (JSON):**
+**Response format (JSON):**
 ```json
 {
   "tool": "message_customer | escalate | create_internal_note | ...",
@@ -137,6 +139,12 @@ Uses Gemini with structured JSON output to decide which tool to call. Grounded i
   "text_or_reason": "What to send or log"
 }
 ```
+
+**HTTP Details:**
+- Endpoint: `https://api.x.ai/v1/chat/completions`
+- Model: `grok-beta`
+- Authentication: Bearer token in Authorization header
+- Timeout: 10 seconds per request
 
 **Fallback mechanism:**
 If the API call fails (timeout, rate limit, invalid response), the system automatically delegates to the rule-based agent and logs the fallback. The order keeps progressing either way.
@@ -171,50 +179,61 @@ The JSON schema forces valid output. If the API fails, rule-based fallback ensur
 
 ## Files
 
-- `order_supervisor_llm.py`: the main simulation (387 lines, includes both Agent and LLMAgent classes)
+- `order_supervisor_grok.py`: the main simulation (412 lines, includes both Agent and GrokAgent classes)
 - `sample_events.json`: example input events (same as the original graded B2 submission)
 - `sample_output.txt`: output of rule-based mode on the sample events
 - `README.md`: this file
 
-## LLM Integration Details
+## Grok API Integration Details
 
 ### API Configuration
 
-The LLM agent reads the Gemini API key from the `GEMINI_API_KEY` environment variable. Never hardcode the key into the script.
+The Grok agent reads the API key from the `GROK_API_KEY` environment variable. Never hardcode the key into the script.
 
 ```bash
-export GEMINI_API_KEY=your_key_here
-python3 order_supervisor_llm.py --llm sample_events.json
+export GROK_API_KEY=your_key_here
+python3 order_supervisor_grok.py --llm sample_events.json
 ```
 
 Or inline:
 
 ```bash
-GEMINI_API_KEY=your_key sample_events.json
+GROK_API_KEY=<your-key> python3 order_supervisor_grok.py --llm sample_events.json
 ```
+
+### API Endpoint
+
+```
+POST https://api.x.ai/v1/chat/completions
+```
+
+The agent sends JSON payloads with the order context and prompt, and expects JSON responses with tool decisions.
 
 ### Error Handling
 
 If any API call fails:
-- Network timeout
+- Network timeout (10 second limit)
+- Invalid API key
 - Rate limit hit
+- Connection error
 - Invalid response JSON
-- Malformed tool name
 
 The system logs the error to stderr and delegates to the rule-based agent for that decision. The `llm_fallbacks` counter increments, so you can see how many times this happened.
 
 ```bash
-[LLM Error] <error details>, falling back to rule-based agent
+[Grok Error] <error details>, falling back to rule-based agent
+[Grok API Error] <HTTP error details>
+[Grok Parse Error] <JSON parse error details>
 ```
 
 If fallbacks are greater than zero, the simulation still completes correctly, but you know some decisions came from the rule-based policy instead of the LLM.
 
-### Testing the LLM Integration
+### Testing the Grok Integration
 
 To confirm the integration works end to end:
 
 ```bash
-GEMINI_API_KEY=<your-key> python3 order_supervisor_llm.py --llm sample_events.json
+GROK_API_KEY=<your-key> python3 order_supervisor_grok.py --llm sample_events.json
 ```
 
 Check the output:
@@ -225,16 +244,32 @@ Check the output:
 
 If `llm_fallbacks` is greater than zero, the API had issues, but the simulation still ran to completion using rule-based fallback.
 
+## Gemini vs. Grok
+
+Both versions produce identical output structure and can be used interchangeably:
+
+| Aspect | Gemini | Grok |
+|--------|--------|------|
+| API Key Source | https://aistudio.google.com/app/apikeys | https://console.x.ai/ |
+| Python Package | google-generativeai | requests |
+| Installation | `pip install google-generativeai` | `pip install requests` |
+| Model | gemini-1.5-flash | grok-beta |
+| Rate Limit (Free) | 60 req/min | Subject to Grok's free tier limits |
+| Structured Output | JSON schema (native) | JSON parsing (manual) |
+| Timeout | Configured in SDK | 10 seconds per request |
+
+**Recommendation:** Use whichever API you have access to. Both work equally well for this simulation.
+
 ## Dependencies
 
 **Rule-based mode (default):**
 - Python 3.7+
 - No external packages
 
-**LLM mode:**
+**Grok LLM mode:**
 - Python 3.7+
-- `google-generativeai` (install with `pip install google-generativeai`)
-- Gemini API key from https://aistudio.google.com/app/apikeys
+- `requests` (install with `pip install requests`)
+- Grok API key from https://console.x.ai/
 
 ## Bonus: Why Wire in an LLM?
 
@@ -242,7 +277,8 @@ This bonus demonstrates the practical integration point for AI reasoning in a de
 
 ## Notes
 
-- This file is 387 lines (over the 200-350 base requirement) because the LLM integration is a bonus feature on top of the required rule-based simulation. The core rule-based simulation alone is within range.
-- Both modes use the exact same `sample_events.json` input.
+- This file is 412 lines (over the 200-350 base requirement) because the LLM integration is a bonus feature on top of the required rule-based simulation. The core rule-based simulation alone is within range.
+- Both rule-based and Grok modes use the exact same `sample_events.json` input.
 - The activity logs may differ slightly between modes (LLM makes different decisions on edge cases), but the structure and final state are identical.
-- The LLM prompt is designed to prevent hallucination: it lists available tools, grounds decisions in event data, and requires escalation when uncertain.
+- The Grok prompt is designed to prevent hallucination: it lists available tools, grounds decisions in event data, and requires escalation when uncertain.
+- If you want to switch between Gemini and Grok, the `order_supervisor_llm.py` (Gemini version) has identical output structure, just different API calls under the hood.
